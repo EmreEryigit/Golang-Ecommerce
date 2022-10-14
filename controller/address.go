@@ -63,11 +63,57 @@ func AddAddress() echo.HandlerFunc {
 }
 func EditHomeAddress() echo.HandlerFunc {
 	return func(c echo.Context) error {
-
+		user_id := c.QueryParam("id")
+		if user_id == "" {
+			return c.JSON(http.StatusNotFound, "invalid search index")
+		}
+		usert_id, err := primitive.ObjectIDFromHex(user_id)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, "server err")
+		}
+		var editAddress model.Address
+		if err = c.Bind(&editAddress); err != nil {
+			return c.JSON(http.StatusBadRequest, "invalid request")
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		filter := bson.D{primitive.E{Key: "_id", Value: usert_id}}
+		update := bson.D{{Key: "$set", Value: bson.D{primitive.E{Key: "address.0.house_name", Value: editAddress.House}, {Key: "address.0.street_name", Value: editAddress.Street}, {Key: "address.0.city_name", Value: editAddress.City}, {Key: "address.0.pin_code", Value: editAddress.Pincode}}}}
+		_, err = UserCollection.UpdateOne(ctx, filter, update)
+		if err != nil {
+			return c.JSON(500, "could not edit address")
+		}
+		defer cancel()
+		ctx.Done()
+		return c.JSON(200, "Edited")
 	}
 }
 func EditWorkAddress() echo.HandlerFunc {
 	return func(c echo.Context) error {
+		user_id := c.QueryParam("id")
+		if user_id == "" {
+			return c.JSON(http.StatusNotFound, "invalid search index")
+		}
+		usert_id, err := primitive.ObjectIDFromHex(user_id)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, "server err")
+		}
+		var editAddress model.Address
+		if err = c.Bind(&editAddress); err != nil {
+			return c.JSON(http.StatusBadRequest, "invalid request")
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		filter := bson.D{primitive.E{Key: "_id", Value: usert_id}}
+		update := bson.D{{Key: "$set", Value: bson.D{primitive.E{Key: "address.1.house_name", Value: editAddress.House}, {Key: "address.1.street_name", Value: editAddress.Street}, {Key: "address.1.city_name", Value: editAddress.City}, {Key: "address.1.pin_code", Value: editAddress.Pincode}}}}
+		_, err = UserCollection.UpdateOne(ctx, filter, update)
+		if err != nil {
+			return c.JSON(500, "something Went wrong")
+
+		}
+		defer cancel()
+		ctx.Done()
+		return c.JSON(200, "Successfully updated the Work Address")
 
 	}
 }
@@ -77,7 +123,6 @@ func DeleteAddress() echo.HandlerFunc {
 		if user_id == "" {
 			return c.JSON(http.StatusNotFound, "invalid search index")
 		}
-
 		addresses := make([]model.Address, 0)
 		usert_id, err := primitive.ObjectIDFromHex(user_id)
 		if err != nil {
