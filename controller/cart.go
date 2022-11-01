@@ -41,7 +41,7 @@ func (app *Application) AddToCart() echo.HandlerFunc {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		err = database.AddProductToCart(ctx, app.prodCollection, productID, userQueryId)
+		err = database.AddProductToCart(ctx, app.prodCollection, app.userCollection, productID, userQueryId)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err)
 		}

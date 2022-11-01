@@ -139,8 +139,23 @@ func Logout() echo.HandlerFunc {
 }
 
 func ProductViewerAdmin() echo.HandlerFunc {
-	return func(ctx echo.Context) error {
+	return func(c echo.Context) error {
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		var products model.Product
+		defer cancel()
+		if err := c.Bind(&products); err != nil {
+			return c.JSON(http.StatusBadRequest, err.Error())
 
+		}
+		products.Product_ID = primitive.NewObjectID()
+		_, anyerr := ProductCollection.InsertOne(ctx, products)
+		if anyerr != nil {
+			return c.JSON(http.StatusInternalServerError, "Not Created")
+
+		}
+		defer cancel()
+		c.JSON(http.StatusOK, "Successfully added our Product Admin!!")
+		return nil
 	}
 }
 
